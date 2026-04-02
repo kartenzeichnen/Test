@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8" />
-<title>Mapbox Example 17 - 2.5D Tree Hex </title>
+<title>Denver Tree Explorer</title>
 
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
@@ -11,7 +11,6 @@
 
 <style>
 
-    /*  Legend Style Sheet  */
     .legend {
         background-color: #fff;
         border-radius: 3px;
@@ -39,8 +38,6 @@
         width: 10px;
     }
 
-    /* Map overlay style sheet  */
-
     .map-overlay {
     font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     position: absolute;
@@ -67,19 +64,15 @@
        padding: 0;
     }
 
-    /*  Body & Map Style Sheet  */
     .map-overlay-inner fieldset {
         border: none;
         padding: 0;
         margin: 0 0 10px;
     }
 
-    /*  Body & Map Style Sheet  */
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; };
-
 </style>
-
 </head>
 
 <body>
@@ -92,7 +85,6 @@
         <fieldset>
             <label>Select layer</label>
             <select id="data_layer" name="layer">
-                <!-- Each value matches a layer ID. -->
                 <option value="0">All Genera</option>            
                 <option value="1">Ash</option>
                 <option value="2">Crabapple</option>
@@ -106,67 +98,48 @@
                 <option value="10">Spruce</option>
             </select>
         </fieldset>
-
         <p class="credit"> This map uses hexagons to visualize the tree data. It is created using the <a href="https://data.colorado.gov/Environment/Map-of-Tree-Inventory-Denver/hzmx-2dfk"> Denver Tree Inventory data </a>. </p>
-
         <p class="credit"> Zoom in to <a href="#" class="credit" id="den_view">Denver</a> </p>
-
     </div>
 </div>
 
-
 <script>
-
-    //Put your mapbox access token here
     mapboxgl.accessToken = 'pk.eyJ1Ijoia2FydGVuemVpY2huZW4iLCJhIjoiY21tMHI1MDR0MDFueTJvbjZocDM3ejZieiJ9.G1QQK4LBG-VefDGlRUrokg';  
 
-        // Load a new map in the 'map' HTML div
         var map = new mapboxgl.Map({
             container: 'map', // container id
-            style: 'mapbox://styles/kartenzeichnen/cmnb2z654004901sjhgczbxfw', // Put your mapbox style ID here
-            center: [-104.951046, 39.732470], // starting position [lng, lat]
-            zoom: 11, // starting zoom
-            pitch: 50 // tilt of the viewpoint in degrees
+            style: 'mapbox://styles/kartenzeichnen/cmnb2z654004901sjhgczbxfw',
+            center: [-104.951046, 39.732470],
+            zoom: 11,
+            pitch: 50
         });
-
-        // When loading the map
         map.on('load', function() {     
-            
-            // Set global light properties which influence 3D layer shadows
             map.setLight({color: "#fff", intensity: 0.15, position: [1, 180, 30]});
-            // Add standard navigation control
             map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');   
-
-            // Load the TREE HEXAGON layer in 3D by setting the type to 'fill-extrusion' 
             map.addLayer({
                 'id':'denver_tree_point',
                 'type':'fill-extrusion',
                 'source':{
                     type:'vector',
-                    url:'mapbox://kartenzeichnen.a7wlcdjo' // After "mapbox://" paste your Mapbox tileset ID
+                    url:'mapbox://kartenzeichnen.a7wlcdjo'
                 },
-                'source-layer':'denver_hexagon_tree_count_top-2uawbx', // name of tilesets
+                'source-layer':'denver_hexagon_tree_count_top-2uawbx',
                 'layout':{
                     'visibility': 'visible'
                 },
                 'paint': {
-                    // color circle by tree genus
                     'fill-extrusion-color':[
                         'interpolate',
                         ['linear'],
                         ['get', 'n_all'],
                         0, "white",
                         720, '#081D58',
-
                     ],
-                    'fill-extrusion-height':['*', 3, ['get', 'n_all']],  //set the height to 3 times of the value of n_all
+                    'fill-extrusion-height':['*', 3, ['get', 'n_all']],
                     'fill-extrusion-opacity':0.8
                 }
             });
-
         })
-
-        // Add an event listener to monitor the selection of tree species 
 
         var lt_genus = [
             "n_all", 
@@ -178,24 +151,17 @@
         ]
 
         var lt_g_max_range = [
-            725, // max value range for "n_all"
-            199, // max value range for "n_Ash"
-            102, // max value range for "n_Crabapple"
-            108, // max value range for "n_Elm"
-            48, // max value range for "n_Hackberry"
-            182, // max value range for "n_Honeylocust"
-            140, // max value range for "n_Linden"
-            171, // max value range for "n_Maple"
-            170, // max value range for "n_Oak"
-            254, // max value range for "n_Pine"
-            94, // max value range for "n_Spruce"
+            725, 
+		199, 102,
+		108, 48, 
+		182, 140,  
+		171, 170, 
+   		254, 94,
         ]
 
         document.getElementById('data_layer').addEventListener('change', function(e){
-
             var genus_selected = lt_genus[e.target.value]
             var genus_s_max = lt_g_max_range[e.target.value]
-
             map.setPaintProperty("denver_tree_point", 'fill-extrusion-color', [
                         'interpolate',
                         ['linear'],
@@ -203,22 +169,17 @@
                         0, "white",
                         genus_s_max, '#081D58',
                     ]);
-
             map.setPaintProperty("denver_tree_point", 'fill-extrusion-height', ['*', 3, ['get', genus_selected]]);
         })
-
         document.getElementById('den_view').addEventListener('click', function(e){
 
             map.flyTo({
-                center:[-104.961046, 39.732470],
+                center:[-104.96, 39.73],
                 zoom:12,
-                speed:0.3,
+                speed:0.5,
                 pitch:60
             })
         })
-
-
 </script>
-
 </body>
 </html>
