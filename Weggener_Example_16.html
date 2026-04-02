@@ -1,0 +1,176 @@
+<html>
+
+<head>
+<meta charset="utf-8" />
+<title>Mapbox Example 16 - Select Layer </title>
+
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
+
+<style>
+
+    /*  Legend Style Sheet  */
+    .legend {
+        background-color: #fff;
+        border-radius: 3px;
+        bottom: 30px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        font:
+            12px/20px 'Helvetica Neue',
+            Arial,
+            Helvetica,
+            sans-serif;
+        padding: 10px;
+        position: absolute;
+        right: 10px;
+        z-index: 1;
+    }
+    .legend h4 {
+        margin: 0 0 10px;
+    }
+
+    .legend div span {
+        border-radius: 50%;
+        display: inline-block;
+        height: 10px;
+        margin-right: 5px;
+        width: 10px;
+    }
+
+    /* Map overlay style sheet  */
+
+    .map-overlay {
+    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    position: absolute;
+    width: 380px;
+    min-width: 380px;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    }
+    .map-overlay .map-overlay-inner {
+        background-color: #fff;
+        box-shadow:0 1px 2px rgba(0, 0, 0, 0.20);
+        border-radius: 3px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .map-overlay h2 {
+        line-height: 24px;
+        display: block;
+        margin: 0 0 10px;
+    }
+    .map-overlay p.credit {
+       margin: 0;
+       padding: 0;
+    }
+
+    /*  Body & Map Style Sheet  */
+    .map-overlay-inner fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 10px;
+    }
+
+    /*  Body & Map Style Sheet  */
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+</style>
+
+</head>
+
+<body>
+<div id="map"></div>
+
+<div class='map-overlay'> 
+    <div class='map-overlay-inner'>
+        <h2> Denver Tree Hexagon </h2>
+        
+        <fieldset>
+            <label>Select layer</label>
+            <select id="data_layer" name="layer">
+                <!-- Each value matches a layer ID. -->
+                <option value="0">All Genera</option>            
+                <option value="1">Ash</option>
+                <option value="2">Crabapple</option>
+                <option value="3">Elm</option>
+                <option value="4">Hackberry</option>
+                <option value="5">Honeylocust</option>
+                <option value="6">Linden</option>
+                <option value="7">Maple</option>
+                <option value="8">Oak</option>
+                <option value="9">Pine</option>
+                <option value="10">Spruce</option>
+            </select>
+        </fieldset>
+
+        <p class="credit"> This map uses hexagons to visualize the tree data. It is created using the <a href="https://data.colorado.gov/Environment/Map-of-Tree-Inventory-Denver/hzmx-2dfk"> Denver Tree Inventory data </a>. </p>
+
+    </div>
+</div>
+
+<script>
+
+    //Put your mapbox access token here
+    mapboxgl.accessToken = 'pk.eyJ1Ijoia2FydGVuemVpY2huZW4iLCJhIjoiY21tMHI1MDR0MDFueTJvbjZocDM3ejZieiJ9.G1QQK4LBG-VefDGlRUrokg';  
+
+        // Load a new map in the 'map' HTML div
+        var map = new mapboxgl.Map({
+            container: 'map', // container id
+            style: 'mapbox://styles/kartenzeichnen/cmnb2z654004901sjhgczbxfw', // Put your mapbox style ID here
+            center: [-104.951046, 39.732470], // starting position [lng, lat]
+            zoom: 11 // starting zoom
+        });
+
+
+// NEW HIGH-CONTRAST PALETTE (Sunset/Magma style)
+var colorLow = "#f5f5dc";    // Beige
+var colorMid = "#8b7355";    // Light Brown
+var colorHigh = "#3e2723";   // Deep Brown
+
+    map.on('load', function() {
+        map.addLayer({
+            'id':'denver_tree_point',
+            'type':'fill',
+            'source':{
+                type:'vector',
+                url:'mapbox://kartenzeichnen.a7wlcdjo'
+            },
+            'source-layer':'denver_hexagon_tree_count_top-2uawbx',
+            'paint': {
+                'fill-color':[
+                    'interpolate',
+                    ['exponential', 1.2], // Slightly gentler exponent
+                    ['get', 'n_all'],
+                    0, colorLow,
+                    350, colorMid,  // Added a midpoint for better visual flow
+                    720, colorHigh
+                ],
+               'fill-opacity': 0.85, // Slightly higher opacity
+            'fill-outline-color': 'rgba(0,0,0,0.1)' // Light thin border for separation
+        }
+    });
+});
+
+    var lt_genus = ["n_all", "n_Ash", "n_Crabapple", "n_Elm", "n_Hackberry", "n_Honeylocust", "n_Linden", "n_Maple", "n_Oak", "n_Pine", "n_Spruce"];
+    var lt_g_max_range = [725, 199, 102, 108, 48, 182, 140, 171, 170, 254, 94];
+
+    document.getElementById('data_layer').addEventListener('change', function(e){
+    var genus_selected = lt_genus[e.target.value];
+    var genus_s_max = lt_g_max_range[e.target.value];
+
+    map.setPaintProperty("denver_tree_point", 'fill-color', [
+        'interpolate',
+        ['exponential', 1.2],
+        ['get', genus_selected],
+        0, colorLow,
+        (genus_s_max / 2), colorMid,
+        genus_s_max, colorHigh
+    ]);
+});
+</script>
+
+</body>
+</html>
